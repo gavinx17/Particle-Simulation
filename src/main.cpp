@@ -1,4 +1,6 @@
 #include <glad/glad.h>
+#include <ft2build.h>
+#include FT_FREETYPE_H
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <math.h>
@@ -26,7 +28,7 @@ int main(void)
 {
     srand(static_cast<unsigned>(time(0)));
 
-    const int num = 5;
+    const int num = 1;
     int particleNumber = 0;
     int height = 720, width = 1280;
 
@@ -95,6 +97,19 @@ int main(void)
                     p[j].vy -= 0.006f;
                 }
             }
+            if (p[i].y <= -1.0f && p[i].vy < 0.0f) {
+                // Reverse direction at bottom and start growing
+                p[i].vy *= -1.0f;
+                p[i].growing = true;
+            }
+            else if (p[i].y >= 1.0f && p[i].vy > 0.0f) {
+                // Reverse direction at top and start shrinking
+                p[i].vy *= -1.0f;
+                p[i].growing = false;
+            }
+
+            float growthRate = 0.00001f * (1.0f - fabs(p[i].y - 0.5f) * 2.0f);
+            p[i].radius += p[i].growing ? growthRate : -growthRate;
         }
 
         // --- Handle input ---

@@ -3,30 +3,62 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <algorithm>
+#include <cstdio>
 
 using namespace std;
 
-bool Block::CheckCollision(Particle& p, Block& b) {
-    float halfWidth = b.width / 2.0f;
-    float halfHeight = b.height / 2.0f;
-    float left = b.x - halfWidth;
-    float right = b.x + halfWidth;
-    float top = b.y + halfHeight;
-    float bottom = b.y - halfHeight;
-
+bool Block::CheckCollision(Particle& p) {
     float closestX = max(left, min(p.x, right));
     float closestY = max(bottom, min(p.y, top));
 
     float dx = p.x - closestX;
     float dy = p.y - closestY;
-
-    return (dx * dx + dy * dy) < (p.radius * p.radius);
+    
+    return ((dx * dx) + (dy * dy)) < (p.radius * p.radius);
 }
 void Block::InitBlock() {
-    float minX = vertices[0];
-    float maxX = vertices[0];
-    float minY = vertices[1];
-    float maxY = vertices[1];
+    float vertices[18] = {
+        -0.3f,  0.3f, 0.0f,  // top left
+         0.3f,  0.3f, 0.0f,  // top right
+         0.3f, -0.3f, 0.0f,  // bottom right
+
+         0.3f, -0.3f, 0.0f,  // bottom right
+        -0.3f, -0.3f, 0.0f,  // bottom left
+        -0.3f,  0.3f, 0.0f   // top left
+    };
+    // Compute min/max bounds from vertices
+    float minX = vertices[0], maxX = vertices[0];
+    float minY = vertices[1], maxY = vertices[1];
+    for (int i = 0; i < 18; i += 3) {
+        if (vertices[i] < minX) minX = vertices[i];
+        if (vertices[i] > maxX) maxX = vertices[i];
+        if (vertices[i + 1] < minY) minY = vertices[i + 1];
+        if (vertices[i + 1] > maxY) maxY = vertices[i + 1];
+    }
+    // Set block properties
+    x = (minX + maxX) / 2.0f;
+    y = (minY + maxY) / 2.0f;
+    width  = maxX - minX;
+    height = maxY - minY;
+    left   = minX;
+    right  = maxX;
+    top    = maxY;
+    bottom = minY;
+    const char* vertexShaderSource = R"(
+        #version 330 core
+        layout (location = 0) in vec3 aPos;
+        void main() {
+            gl_Position = vec4(aPos, 1.0);
+        }
+    )";
+
+    const char* fragmentShaderSource = R"(
+        #version 330 core
+        out vec4 FragColor;
+        void main() {
+            FragColor = vec4(1.0, 0.5, 0.2, 1.0);
+        }
+    )";
 
     // Loop through vertex array to find min/max
     for (int i = 0; i < 18; i += 3) {

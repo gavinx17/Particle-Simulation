@@ -15,7 +15,13 @@
             "includePath": [
                 "${workspaceFolder}/Dependencies/glfw-3.4/include",
                 "${workspaceFolder}/Dependencies/glfw-3.4/deps",
-                "${workspaceFolder}"
+                "${workspaceFolder}",
+                "${workspaceFolder}/Dependencies/freetype-2.14.0/include",
+                "${workspaceFolder}/Dependencies/glm-master/glm",
+                "${workspaceFolder}/Dependencies/glm-master",
+                "${workspaceFolder}/src",
+                "${workspaceFolder}/Dependencies/glad/include/glad",
+                "${workspaceFolder}/Dependencies/glad/include"
             ]
         }
     ],
