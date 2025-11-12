@@ -2,25 +2,53 @@
 #include "block.h"
 #include <cmath>
 
-void Particle::Update(float dt)   {
-        if(x - radius <= -1.0f)    {
+    void Particle::Update(float dt) {
+        const float bottom = -0.99f + radius;
+        const float top = 0.99f - radius;
+        const float friction = 0.74f;
+        const float bounceDamping = 0.74f;
+        const float settleThreshold = 0.01f;  // when to start settling
+        const float settleDamping = 0.95f;    // how quickly it comes to rest (closer to 1 = slower)
+
+        // Left and right bounds
+        if (x - radius <= -1.0f) {
             vx *= -0.6f;
-            x = -.8f + radius;
+            x = -0.99f + radius;
         }
-        if(x + radius >= 1.0f)    {
+        if (x + radius >= 1.0f) {
             vx *= -0.6f;
-            x = .8f - radius;
+            x = 0.99f - radius;
         }
+
+        // Bottom collision
         if (y - radius <= -1.0f) {
-            y = -.8f + radius;
-            vy *= -0.74f;
-            vx *= 0.74f; // horizontal friction
+            y = bottom;
+            vy *= -bounceDamping;
+            vx *= friction; // horizontal slowdown
+
+            // Smoothly settle if the bounce is very small
+            if (fabs(vy) < settleThreshold) {
+                vy *= settleDamping;
+                vx *= settleDamping;
+
+                // If nearly still, stop completely
+                if (fabs(vy) < 0.001f && fabs(vx) < 0.001f) {
+                    vy = 0.0f;
+                    vx = 0.0f;
+                }
+            }
         }
-        if(y - radius >= 1.0f)    {
-            vy *= -0.65; // slow down as it bounces
-            y = .8f - radius;
+
+        // Top collision
+        if (y + radius >= 1.0f) {
+            vy *= -0.65f;
+            y = top;
         }
+
+        // Gravity
         vy += (gravity * dt);
+
+        // Update position
         x += (vx * dt);
         y += (vy * dt);
     }
@@ -38,24 +66,16 @@ void Particle::Update(float dt)   {
         return distance <= (one.radius + two.radius);
     }
     bool Particle::CheckCollision(Particle p, Block b) {
-        // Get the half extents of the block
         float halfWidth = b.width / 2.0f;
         float halfHeight = b.height / 2.0f;
 
-        // Compute AABB edges
         float left = b.x - halfWidth;
         float right = b.x + halfWidth;
         float top = b.y + halfHeight;
         float bottom = b.y - halfHeight;
 
-        // Find the closest point on the block to the circle center
-        float closestX = std::max(left, std::min(p.x, right));
-        float closestY = std::max(bottom, std::min(p.y, top));
-
-        // Calculate distance between circle center and closest point
-        float dx = p.x - closestX;
-        float dy = p.y - closestY;
-
-        // If distance < radius, collision
-        return (dx * dx + dy * dy) < (p.radius * p.radius);
+        return(p.x >= left - p.radius &&
+               p.x <= right + p.radius &&
+               p.y <= top + p.radius &&
+               p.y >= bottom + p.radius);
     }

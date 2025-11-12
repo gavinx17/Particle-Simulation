@@ -4,6 +4,9 @@
 #include <GLFW/glfw3.h>
 #include <algorithm>
 #include <cstdio>
+#include <random>
+#include <ctime>
+#include <iostream>
 
 using namespace std;
 
@@ -17,14 +20,20 @@ bool Block::CheckCollision(Particle& p) {
     return ((dx * dx) + (dy * dy)) < (p.radius * p.radius);
 }
 void Block::InitBlock() {
-    float vertices[18] = {
-        -0.3f,  0.3f, 0.0f,  // top left
-         0.3f,  0.3f, 0.0f,  // top right
-         0.3f, -0.3f, 0.0f,  // bottom right
+    random_device rd;
+    unsigned int seed = rd() ? rd() : static_cast<unsigned int>(std::time(nullptr));
+    mt19937 gen(seed);
+    uniform_real_distribution<float> distrib(-.7f, .7f);
 
-         0.3f, -0.3f, 0.0f,  // bottom right
-        -0.3f, -0.3f, 0.0f,  // bottom left
-        -0.3f,  0.3f, 0.0f   // top left
+    float random_num = distrib(gen);
+    float vertices[18] = {
+        -random_num, -0.2f, 0.0f,  // top left
+         random_num,  -0.2f, 0.0f,  // top right
+         random_num, -1.0f, 0.0f,  // bottom right
+
+         random_num, -1.0f, 0.0f,  // bottom right
+        -random_num, -1.0f, 0.0f,  // bottom left
+        -random_num,  -0.2f, 0.0f   // top left
     };
     // Compute min/max bounds from vertices
     float minX = vertices[0], maxX = vertices[0];

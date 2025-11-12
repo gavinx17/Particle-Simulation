@@ -30,7 +30,7 @@ int main(void)
 
     const int num = 1;
     int particleNumber = 0;
-    int height = 720, width = 1280;
+    int height = 400, width = 400;
 
     Particle p[num];
     Block b;
@@ -86,9 +86,9 @@ int main(void)
             p[i].DrawParticle();
             p[i].Update(0.001f);
             if (p[i].CheckCollision(p[i], b)) {
-                    p[i].vx += 0.006f;
-                    p[i].vy += 0.006f;
-                }
+                p[i].vx *= -1;
+                p[i].vy *= -1;
+            }
             for (int j = i + 1; j < num; j++) {
                 if (p[i].CheckCollision(p[i], p[j])) {
                     p[i].vx += 0.006f;
@@ -97,29 +97,15 @@ int main(void)
                     p[j].vy -= 0.006f;
                 }
             }
-            if (p[i].y <= -1.0f && p[i].vy < 0.0f) {
-                // Reverse direction at bottom and start growing
-                p[i].vy *= -1.0f;
-                p[i].growing = true;
-            }
-            else if (p[i].y >= 1.0f && p[i].vy > 0.0f) {
-                // Reverse direction at top and start shrinking
-                p[i].vy *= -1.0f;
-                p[i].growing = false;
-            }
-
-            float growthRate = 0.00001f * (1.0f - fabs(p[i].y - 0.5f) * 2.0f);
-            p[i].radius += p[i].growing ? growthRate : -growthRate;
         }
 
         // --- Handle input ---
         if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-            p[particleNumber].vx += 0.006f;
+            p[particleNumber].vx += 0.0006f;
         if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
-            p[particleNumber].vx -= 0.006f;
+            p[particleNumber].vx -= 0.0006f;
         if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-            p[particleNumber].vy += 0.005f;
-            p[particleNumber].y += 0.005f;
+            p[particleNumber].vy += 0.004f;
         }
 
         static bool tabPressed = false;
