@@ -19,11 +19,11 @@ bool Block::CheckCollision(Particle& p) {
     
     return ((dx * dx) + (dy * dy)) < (p.radius * p.radius);
 }
-void Block::InitBlock() {
+void Block::InitBlock(float randNum) {
     random_device rd;
     unsigned int seed = rd() ? rd() : static_cast<unsigned int>(std::time(nullptr));
     mt19937 gen(seed);
-    uniform_real_distribution<float> distrib(-.7f, .7f);
+    uniform_real_distribution<float> distrib(-randNum, randNum);
 
     float random_num = distrib(gen);
     float vertices[18] = {
@@ -116,4 +116,7 @@ void Block::DrawBlock() {
     glUseProgram(shaderProgram);
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
+}
+void Block::Update() {
+
 }

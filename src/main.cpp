@@ -69,7 +69,7 @@ int main(void)
         return -1;
     }
 
-    b.InitBlock();
+    b.InitBlock(0.245f);
     // --- Set up OpenGL state ---
     glViewport(0, 0, width, height);
     glfwSetFramebufferSizeCallback(window, [](GLFWwindow*, int w, int h) {
@@ -104,7 +104,7 @@ int main(void)
             p[particleNumber].vx += 0.0006f;
         if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
             p[particleNumber].vx -= 0.0006f;
-        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
             p[particleNumber].vy += 0.004f;
         }
 
