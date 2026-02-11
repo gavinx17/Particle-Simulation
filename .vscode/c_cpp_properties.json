@@ -13,15 +13,16 @@
             "cppStandard": "c++17",
             "intelliSenseMode": "windows-msvc-x64",
             "includePath": [
+                "C:\\C Program\\Dependencies\\SFML-3.0.2\\include",
                 "${workspaceFolder}/Dependencies/glfw-3.4/include",
-                "${workspaceFolder}/Dependencies/glfw-3.4/deps",
                 "${workspaceFolder}",
                 "${workspaceFolder}/Dependencies/freetype-2.14.0/include",
-                "${workspaceFolder}/Dependencies/glm-master/glm",
-                "${workspaceFolder}/Dependencies/glm-master",
+                "${workspaceFolder}/Dependencies/SFML-3.0.2/include/SFML",
                 "${workspaceFolder}/src",
                 "${workspaceFolder}/Dependencies/glad/include/glad",
-                "${workspaceFolder}/Dependencies/glad/include"
+                "${workspaceFolder}/Dependencies/glad/include",
+                "${workspaceFolder}/Dependencies/imgui",
+                "${workspaceFolder}/Dependencies/imgui/backends"
             ]
         }
     ],
