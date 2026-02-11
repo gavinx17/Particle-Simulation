@@ -13,7 +13,7 @@ class Particle  {
         float x, y;       // current position
         float vx, vy;     // velocity
         float radius;
-        float gravity = -.980665f;
+        float gravity = -.990665f;
         float force = .98f;
         Particle() : x(0), y(0), vx(0.0f), vy(0.0f), radius(0) {}
         Particle(float startX, float startY, float r)

@@ -16,8 +16,9 @@ class Block {
     Block(float startX, float startY, float startHeight, float startWidth)
         : x(startX), y(startY), height(startHeight), width(startWidth) {}
     bool CheckCollision(Particle& p);
-    void InitBlock(float);
+    void InitBlock(float, float);
     void DrawBlock();
     void Update();
+    char* getShaderCode(const char* filename);
 };
 #endif

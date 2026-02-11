@@ -21,7 +21,7 @@
         }
 
         // Bottom collision
-        if (y - radius <= -1.0f) {
+        if (y - radius <= -0.99f) {
             y = bottom;
             vy *= -bounceDamping;
             vx *= friction; // horizontal slowdown
