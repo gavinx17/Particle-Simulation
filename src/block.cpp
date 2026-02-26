@@ -35,58 +35,28 @@ bool Block::CheckCollision(Particle& p) {
     
     return ((dx * dx) + (dy * dy)) < (p.radius * p.radius);
 }
-void Block::InitBlock(float centerX, float randNum) {
-    random_device rd;
-    unsigned int seed = rd() ? rd() : static_cast<unsigned int>(std::time(nullptr));
-    mt19937 gen(seed);
-    uniform_real_distribution<float> distrib(-randNum, randNum);
+void Block::InitBlock(float centerX, float centerY, float blockWidth, float blockHeight) {
+    x = centerX;
+    y = centerY;
+    width = blockWidth;
+    height = blockHeight;
 
-    float random_num = distrib(gen);
+    left   = x - width / 2.0f;
+    right  = x + width / 2.0f;
+    top    = y + height / 2.0f;
+    bottom = y - height / 2.0f;
+
     float vertices[18] = {
-        -random_num - halfWidth, -0.2f, 0.0f,  // top left
-         random_num + halfWidth,  -0.2f, 0.0f,  // top right
-         random_num + halfWidth, -1.0f, 0.0f,  // bottom right
+        left,  top,    0.0f,
+        right, top,    0.0f,
+        right, bottom, 0.0f,
 
-         random_num + halfWidth, -1.0f, 0.0f,  // bottom right
-        -random_num - halfWidth, -1.0f, 0.0f,  // bottom left
-        -random_num - halfWidth,  -0.2f, 0.0f   // top left
+        right, bottom, 0.0f,
+        left,  bottom, 0.0f,
+        left,  top,    0.0f
     };
-    // Compute min/max bounds from vertices
-    float minX = vertices[0], maxX = vertices[0];
-    float minY = vertices[1], maxY = vertices[1];
-    for (int i = 0; i < 18; i += 3) {
-        if (vertices[i] < minX) minX = vertices[i];
-        if (vertices[i] > maxX) maxX = vertices[i];
-        if (vertices[i + 1] < minY) minY = vertices[i + 1];
-        if (vertices[i + 1] > maxY) maxY = vertices[i + 1];
-    }
-    // Set block properties
-    x = (minX + maxX) / 2.0f;
-    y = (minY + maxY) / 2.0f;
-    width  = maxX - minX;
-    height = maxY - minY;
-    left   = centerX - halfWidth;
-    right  = centerX + halfWidth;
-    top    = -0.2f;
-    bottom = -1.0f;
-    const char* vertexShaderSource = getShaderCode("shaders/vertex.txt");
 
-    const char* fragmentShaderSource = getShaderCode("shaders/fragment.txt");
-
-    // Loop through vertex array to find min/max
-    for (int i = 0; i < 18; i += 3) {
-        if (vertices[i] < minX) minX = vertices[i];
-        if (vertices[i] > maxX) maxX = vertices[i];
-        if (vertices[i + 1] < minY) minY = vertices[i + 1];
-        if (vertices[i + 1] > maxY) maxY = vertices[i + 1];
-    }
-
-    // Set block properties
-    x = centerX;          // center X
-    y = (top + bottom) / 2.0f;          // center Y
-    width = halfWidth * 2.0f;               // total width
-    height = top - bottom;              // total height
-    // Create VAO and VBO once
+    // OpenGL VAO/VBO setup (same as before)
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
 
@@ -94,28 +64,10 @@ void Block::InitBlock(float centerX, float randNum) {
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    // Build shaders once
-    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-
-    unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-
-    shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-
-    // Delete temporary shader objects
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-
-    // Set up attribute pointers
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 }
+
 void Block::DrawBlock() {
     glUseProgram(shaderProgram);
     glBindVertexArray(VAO);

@@ -1,6 +1,7 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include "constants.h"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
@@ -11,8 +12,10 @@ using namespace std;
 
 #define max_size 1
 #define min_size -1
-#define height 1200
-#define width 1200
+
+void set_num_balls(int num) {
+    constants::num_balls = num;
+}
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -20,7 +23,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
         glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
 
-void error_callback(int error, const char* description)
+void error_callback_gui(int error, const char* description)
 {
     fprintf(stderr, "Error: %s\n", description);
 }
@@ -29,21 +32,44 @@ float sigmoid(float n) {
     return 1.0f / (1.0f + exp(-n));
 }
 
-int main(void)
+GLFWwindow* start()
 {
-    glfwSetErrorCallback(error_callback);
+    glfwSetErrorCallback(error_callback_gui);
 
     if (!glfwInit()) {
         cerr << "Failed to initialize GLFW\n";
-        return -1;
+        return nullptr;
     }
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
     
+    GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
+    if (primaryMonitor == NULL) {
+        // Handle error or fallback to windowed mode
+    }
 
-    GLFWwindow* window = glfwCreateWindow(width, height, "IMGui Test", nullptr, nullptr);
+    // Get the video mode (resolution, etc.) of the primary monitor
+    const GLFWvidmode* mode = glfwGetVideoMode(primaryMonitor);
+    if (mode == NULL) {
+        // Handle error
+    }
+
+    // Create a fullscreen window using the monitor's resolution
+    GLFWwindow* window = glfwCreateWindow(
+        mode->width, 
+        mode->height, 
+        "Simple GUI", 
+        primaryMonitor, // Pass the monitor object for fullscreen
+        NULL
+    );
+
+    if (window == NULL) {
+        // Handle window creation failure
+        glfwTerminate();
+        return nullptr;
+    }
     glfwMakeContextCurrent(window);   // MUST come first
 
     IMGUI_CHECKVERSION();
@@ -55,7 +81,7 @@ int main(void)
     if (!window) {
         cerr << "Failed to create GLFW window\n";
         glfwTerminate();
-        return -1;
+        return nullptr;
     }
 
     glfwMakeContextCurrent(window);
@@ -63,10 +89,10 @@ int main(void)
     // --- Initialize GLAD ---
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         cerr << "Failed to initialize GLAD\n";
-        return -1;
+        return nullptr;
     }
     // --- Set up OpenGL state ---
-    glViewport(0, 0, width, height);
+    glViewport(0, 0, constants::width, constants::height);
     glfwSetFramebufferSizeCallback(window, [](GLFWwindow*, int w, int h) {
         glViewport(0, 0, w, h);
     });
@@ -75,6 +101,7 @@ int main(void)
     float my_color[4] = {1,1,1,1};
     bool my_tool_active = true;
     bool show_graph = false;
+    int num_balls_gui = 1;
     // --- Main loop ---
     while (!glfwWindowShouldClose(window) && my_tool_active)
     {
@@ -83,7 +110,9 @@ int main(void)
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+        ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_FirstUseEver);
         ImGui::Begin("My First Tool", &my_tool_active, ImGuiWindowFlags_MenuBar);
+        ImGui::DragInt("Number of Balls", &num_balls_gui, 1, 1, 100);
         if (ImGui::BeginMenuBar())
         {
             if (ImGui::BeginMenu("File"))
@@ -105,11 +134,21 @@ int main(void)
         // Edit a color stored as 4 floats
 
         ImGui::ColorEdit4("Color", my_color);
+        ImVec4 my_color_vec4 = ImVec4(my_color[0], my_color[1], my_color[2], my_color[3]);
 
         ImGui::TextColored(
-            ImVec4(my_color[0], my_color[1], my_color[2], my_color[3]),
+            my_color_vec4,
             "Important Stuff"
         );
+        ImGui::PushStyleColor(ImGuiCol_Button, my_color_vec4);
+        if(ImGui::Button("Start")) {
+            set_num_balls(num_balls_gui);
+            ImGui_ImplOpenGL3_Shutdown();
+            ImGui_ImplGlfw_Shutdown();
+            ImGui::DestroyContext();
+            return window;
+        }
+        ImGui::PopStyleColor(1);
 
         // Display contents in a scrolling region
         ImGui::End();
@@ -119,10 +158,9 @@ int main(void)
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+    set_num_balls(num_balls_gui);
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
-    glfwDestroyWindow(window);
-    glfwTerminate();
-    return 0;
+    return window;
 }

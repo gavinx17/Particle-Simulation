@@ -1,62 +1,57 @@
-# Compiler
 CXX = g++
+CC  = gcc
 
-# Include paths
-CXXFLAGS = -IDependencies/glfw/include \
+CXXFLAGS = -std=c++17 \
+           -IDependencies/glfw/include \
            -IDependencies/glad/include \
            -IDependencies/imgui \
            -IDependencies/imgui/backends
 
-# Libraries
-LIBS = -LDependencies/glfw/lib-mingw-w64 -lglfw3 -lopengl32 -lgdi32
+LIBS = -LDependencies/glfw/lib-mingw-w64 \
+       -lglfw3 \
+       -lopengl32 \
+       -lgdi32 \
+       -lwinmm \
+       -luser32 \
+       -lkernel32 \
+       -lshell32
 
-# Output
+
 TARGET = sim.exe
 
-# Object files
-OBJS = gui.o \
-       glad.o \
-       imgui.o imgui_draw.o imgui_tables.o imgui_widgets.o imgui_demo.o \
-       imgui_impl_glfw.o imgui_impl_opengl3.o
+SRC = \
+	src/main.cpp \
+	src/gui.cpp \
+	src/constants.cpp \
+	src/particle.cpp \
+	src/block.cpp \
+	src/button.cpp \
+	Dependencies/glad/src/glad.c \
+	Dependencies/imgui/imgui.cpp \
+	Dependencies/imgui/imgui_draw.cpp \
+	Dependencies/imgui/imgui_tables.cpp \
+	Dependencies/imgui/imgui_widgets.cpp \
+	Dependencies/imgui/imgui_demo.cpp \
+	Dependencies/imgui/backends/imgui_impl_glfw.cpp \
+	Dependencies/imgui/backends/imgui_impl_opengl3.cpp
 
-# Default target
+OBJS = $(SRC:.cpp=.o)
+OBJS := $(OBJS:.c=.o)
+
 all: $(TARGET)
 
-# Link step
 $(TARGET): $(OBJS)
 	$(CXX) $(OBJS) $(LIBS) -o $(TARGET)
 
-# Your source
-gui.o: src/gui.cpp
-	$(CXX) -c src/gui.cpp $(CXXFLAGS)
+%.o: %.cpp
+	$(CXX) -c $< $(CXXFLAGS) -o $@
 
-# Glad
-glad.o: Dependencies/glad/src/glad.c
-	$(CXX) -c $< -IDependencies/glad/include
+%.o: %.c
+	$(CC) -c $< -IDependencies/glad/include -o $@
 
-# ImGui core
-imgui.o: Dependencies/imgui/imgui.cpp
-	$(CXX) -c $< $(CXXFLAGS)
-
-imgui_draw.o: Dependencies/imgui/imgui_draw.cpp
-	$(CXX) -c $< $(CXXFLAGS)
-
-imgui_tables.o: Dependencies/imgui/imgui_tables.cpp
-	$(CXX) -c $< $(CXXFLAGS)
-
-imgui_widgets.o: Dependencies/imgui/imgui_widgets.cpp
-	$(CXX) -c $< $(CXXFLAGS)
-
-imgui_demo.o: Dependencies/imgui/imgui_demo.cpp
-	$(CXX) -c $< $(CXXFLAGS)
-
-# ImGui backends
-imgui_impl_glfw.o: Dependencies/imgui/backends/imgui_impl_glfw.cpp
-	$(CXX) -c $< $(CXXFLAGS)
-
-imgui_impl_opengl3.o: Dependencies/imgui/backends/imgui_impl_opengl3.cpp
-	$(CXX) -c $< $(CXXFLAGS)
-
-# Clean build artifacts
 clean:
-	del *.o $(TARGET)
+	rm -f src/*.o
+	rm -f Dependencies/glad/src/*.o
+	rm -f Dependencies/imgui/*.o
+	rm -f Dependencies/imgui/backends/*.o
+	rm -f sim.exe

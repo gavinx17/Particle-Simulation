@@ -3,14 +3,14 @@
 #include <iostream>
 #include <math.h>
 #include <vector>
+#include "imgui.h"
 #include "particle.h"
 #include "block.h"
+#include "gui.h"
+#include "constants.h"
 #include "button.h"
 
 using namespace std;
-
-#define max_size 1
-#define min_size -1
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -25,32 +25,24 @@ void error_callback(int error, const char* description)
 
 int main(void)
 {
-    srand(static_cast<unsigned>(time(0)));
-    int height = 400, width = 400;
-    Particle p;
-    std::vector<Block> blocks;
-    blocks.emplace_back();
-    blocks.emplace_back();
-    //Button btn;
-    bool buttonClicked = false;
-
-    float startX = min_size + ((float)rand() / RAND_MAX) * (max_size - min_size);
-    float startY = min_size + ((float)rand() / RAND_MAX) * (max_size - min_size);
-    p = Particle(startX, startY, 0.03f); // Last argument is radius for every particle.
-
-    // --- Initialize GLFW ---
-    glfwSetErrorCallback(error_callback);
-
-    if (!glfwInit()) {
-        cerr << "Failed to initialize GLFW\n";
+    GLFWwindow* result_window = start();
+    int balls = constants::num_balls;
+    if (!result_window) {
+        cerr << "Failed to initialize GUI\n";
         return -1;
     }
+    srand(static_cast<unsigned>(time(0)));
+    Particle p[balls];
+    std::vector<Block> blocks;
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
+    for(int i = 0; i < balls; i++) {
+        float startX = constants::min_size + ((float)rand() / RAND_MAX) * (constants::max_size - constants::min_size);
+        float startY = constants::min_size + ((float)rand() / RAND_MAX) * (constants::max_size - constants::min_size);
+        p[i] = Particle(startX, startY, 0.03f); // Last argument is radius for every particle.
+    }
 
-    GLFWwindow* window = glfwCreateWindow(width, height, "Particle Simulation", nullptr, nullptr);
+
+    GLFWwindow* window = result_window; // Use the window created in start()
     if (!window) {
         cerr << "Failed to create GLFW window\n";
         glfwTerminate();
@@ -65,45 +57,42 @@ int main(void)
         return -1;
     }
 
-    blocks[0].InitBlock(0.5f, 0.245f);
-    blocks[1].InitBlock(-0.5f, 0.245f);
-    //btn.InitButton();
+    blocks.emplace_back();
+    blocks[0].InitBlock(0.5f, 0.245f, 0.5f, 0.1f);
+
+    blocks.emplace_back();
+    blocks[1].InitBlock(-0.5f, 0.245f, 0.5f, 0.1f);
+
     // --- Set up OpenGL state ---
-    glViewport(0, 0, width, height);
+    glViewport(0, 0, constants::width, constants::height);
     glfwSetFramebufferSizeCallback(window, [](GLFWwindow*, int w, int h) {
         glViewport(0, 0, w, h);
     });
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     // --- Main loop ---
-    while (!glfwWindowShouldClose(window))
-    {
+   // --- Main loop ---
+    float lastFrameTime = glfwGetTime();
+
+    while (!glfwWindowShouldClose(window))  {
         glClear(GL_COLOR_BUFFER_BIT);
         glColor3f(0.078f, 0.75f, 0.078f);
-        //btn.Update();
-        p.DrawParticle();
-        p.Update(0.0008f);
-        for(Block& block: blocks) {
-            block.DrawBlock();
-            if (p.CheckCollision(p, block)) {
-                p.vx *= -1;
-                p.vy *= -1;
-            }
+
+        float currentTime = glfwGetTime();
+        float dt = (currentTime - lastFrameTime) / p[0].velocity; // Scale down dt for smoother movement
+        lastFrameTime = currentTime;
+
+        // --- Draw particles ---
+        for(int i = 0; i < balls; i++)
+        {
+            p[i].Update(dt, blocks, p, balls, window);
+            p[i].DrawParticle();
         }
 
-        // --- Handle input ---
-        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-            p.vx += 0.0006f;
-        if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
-            p.vx -= 0.0006f;
-        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-            p.vy += 0.004f;
-        }
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-
-    glfwDestroyWindow(window);
-    glfwTerminate();
-    return 0;
+glfwDestroyWindow(window);
+glfwTerminate();
+return 0;
 }

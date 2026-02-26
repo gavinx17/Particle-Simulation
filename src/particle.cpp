@@ -1,71 +1,94 @@
 #include "particle.h"
 #include "block.h"
+#include "constants.h"
 #include <cmath>
+#include <vector>
 
-    void Particle::Update(float dt) {
-        const float bottom = -0.99f + radius;
-        const float top = 0.99f - radius;
-        const float friction = 0.74f;
-        const float bounceDamping = 0.74f;
-        const float settleThreshold = 0.01f;  // when to start settling
-        const float settleDamping = 0.95f;    // how quickly it comes to rest (closer to 1 = slower)
+    Particle::Particle(float x, float y, float r) {
+        this->x = x;
+        this->y = y;
+        this->radius = r;
+        this->vx = 0.0f;
+        this->vy = 0.0f;
+        this->velocity = 5.0f; // Default speed, can be adjusted as needed
+    }
 
-        // Left and right bounds
-        if (x - radius <= -1.0f) {
-            vx *= -0.6f;
-            x = -0.99f + radius;
+    void Particle::Update(float dt, std::vector<Block>& blocks, Particle p[], int balls, GLFWwindow* window) {
+    for(int i = 0; i < balls; i++)
+    {
+        // Constants
+        const float gravity = -0.9f;       // units per second²
+        const float jumpVelocity = 1.5f;   // units per second
+        const float floorY = -1.0f;
+
+        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+            p[i].vx += 2.0f * dt; // velocity scaled by dt
+        if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+            p[i].vx -= 2.0f * dt;
+        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+            p[i].vy += jumpVelocity * dt; // Set jump velocity (scaled by dt)
+
+        p[i].vy += gravity * dt;
+
+        p[i].x += p[i].vx * dt;
+        p[i].y += p[i].vy * dt;
+
+        // --- Floor collision ---
+        if (p[i].y - p[i].radius < floorY) {
+            p[i].y = floorY + p[i].radius;
+            p[i].vy *= -0.8f; // bounce with damping
         }
-        if (x + radius >= 1.0f) {
-            vx *= -0.6f;
-            x = 0.99f - radius;
+
+        // --- Wall collision (optional) ---
+        if (p[i].x - p[i].radius <= -1.0f) {
+            p[i].x = -1.0f + p[i].radius;
+            p[i].vx *= -0.5f; // bounce with damping
         }
+        if (p[i].x + p[i].radius >= 1.0f) {
+            p[i].x = 1.0f - p[i].radius;
+            p[i].vx *= -0.5f;
+        }
+    }
 
-        // Bottom collision
-        if (y - radius <= -0.99f) {
-            y = bottom;
-            vy *= -bounceDamping;
-            vx *= friction; // horizontal slowdown
-
-            // Smoothly settle if the bounce is very small
-            if (fabs(vy) < settleThreshold) {
-                vy *= settleDamping;
-                vx *= settleDamping;
-
-                // If nearly still, stop completely
-                if (fabs(vy) < 0.001f && fabs(vx) < 0.001f) {
-                    vy = 0.0f;
-                    vx = 0.0f;
-                }
+    // --- Block collisions ---
+    for(Block& block: blocks) {
+        block.DrawBlock();
+        for(int i = 0; i < balls; i++) {
+            if (p[i].CheckCollision(p[i], block)) {
+                p[i].vx *= -0.5f; // bounce with damping
+                p[i].vy *= -0.5f; // bounce with damping
             }
         }
-
-        // Top collision
-        if (y + radius >= 1.0f) {
-            vy *= -0.65f;
-            y = top;
-        }
-
-        // Gravity
-        vy += (gravity * dt);
-
-        // Update position
-        x += (vx * dt);
-        y += (vy * dt);
     }
+    for(int i = 0; i < balls; i++) {
+        for(int j = i + 1; j < balls; j++) {
+            if (p[i].CheckCollision(p[i], p[j])) {
+                // Simple elastic collision response
+                float tempVx = p[i].vx;
+                float tempVy = p[i].vy;
+                p[i].vx = p[j].vx;
+                p[i].vy = p[j].vy;
+                p[j].vx = tempVx;
+                p[j].vy = tempVy;
+            }
+        }
+    }
+}
+
     void Particle::DrawParticle()  {
         glBegin(GL_POLYGON);
-        for(double i = 0; i < 2 * M_PI; i += M_PI / 24)  {
+        for(double i = 0; i < 2 * constants::M_PI; i += constants::M_PI / 24)  {
             glVertex3f((cos(i) * radius) + x,(sin(i) * radius) + y, 0.0);
         }
         glEnd();
     }
-    bool Particle::CheckCollision(Particle one, Particle two) {
+    bool Particle::CheckCollision(Particle& one, Particle& two) {
         float dx = one.x - two.x;
         float dy = one.y - two.y;
         float distance = sqrt(dx * dx + dy * dy);   // Distance formula
         return distance <= (one.radius + two.radius);
     }
-    bool Particle::CheckCollision(Particle p, Block b) {
+    bool Particle::CheckCollision(Particle& p, Block& b) {
         float halfWidth = b.width / 2.0f;
         float halfHeight = b.height / 2.0f;
 
@@ -75,7 +98,7 @@
         float bottom = b.y - halfHeight;
 
         return(p.x >= left - p.radius &&
-               p.x <= right + p.radius &&
-               p.y <= top + p.radius &&
-               p.y >= bottom + p.radius);
+            p.x <= right + p.radius &&
+            p.y <= top + p.radius &&
+            p.y >= bottom + p.radius);
     }

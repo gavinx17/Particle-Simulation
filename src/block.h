@@ -6,6 +6,8 @@
 #include <GLFW/glfw3.h>
 #include <algorithm>
 
+class Particle; // Forward declaration
+
 class Block {
     public:
     float height, width, mass, x, y,halfWidth,halfHeight,left,right,top,bottom;
@@ -16,7 +18,7 @@ class Block {
     Block(float startX, float startY, float startHeight, float startWidth)
         : x(startX), y(startY), height(startHeight), width(startWidth) {}
     bool CheckCollision(Particle& p);
-    void InitBlock(float, float);
+    void InitBlock(float, float, float, float);
     void DrawBlock();
     void Update();
     char* getShaderCode(const char* filename);

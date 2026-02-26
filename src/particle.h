@@ -4,24 +4,23 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <cmath>
+#include <vector>
+#include "block.h"
 
-class Block;
+class Block; // Forward declaration
 
-class Particle  {
-    public:
-        bool growing;
-        float x, y;       // current position
-        float vx, vy;     // velocity
-        float radius;
-        float gravity = -.990665f;
-        float force = .98f;
-        Particle() : x(0), y(0), vx(0.0f), vy(0.0f), radius(0) {}
-        Particle(float startX, float startY, float r)
-            : x(startX), y(startY), vx(0.0f), vy(0.0f), radius(r) {}
+class Particle {
+public:
+    float x, y, vx, vy, radius, velocity;
 
-        void DrawParticle();
-        void Update(float dt);
-        bool CheckCollision(Particle one, Particle two);
-        bool CheckCollision(Particle p, Block b);
+    Particle() = default;
+    Particle(float x, float y, float r);
+
+    void Update(float dt, std::vector<Block>& blocks, Particle p[], int balls, GLFWwindow* window);
+    void DrawParticle();
+
+    bool CheckCollision(Particle& one, Particle& two);
+    bool CheckCollision(Particle& p, Block& b);
 };
+
 #endif
